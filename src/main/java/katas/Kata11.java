@@ -65,34 +65,40 @@ public class Kata11 {
         List<Map> boxArts = DataUtil.getBoxArts();
         List<Map> bookmarkList = DataUtil.getBookmarkList();
 
-        return lists.stream().map(list -> Map.of("name",
-                        list.get("name"), "videos",
-                        videos.stream().filter(
-                                        video -> video.get("listId").equals(list.get("id")))
-                                .map(video -> ImmutableMap.of("id", video.get("id"),
-                                        "title", video.get("title"), "time",
-                                        getTime(video.get("id"), bookmarkList),
-                                        "boxart",
-                                        boxArts.stream()
-                                                .filter(box -> video.get("id")
-                                                        .equals(box.get("videoId")))
-                                                .min(boxArtSize())
-                                                .map(boxArt -> boxArt.get("url"))
-                                                .orElse("")))
+        return lists.stream()
+                .map(list -> ImmutableMap.of("name", getUrl(list, "name"), "videos",
+                        videos.stream().filter(video -> isValidateVideosList(video, "listId", getUrl(list, "id")))
+                                .map(video -> ImmutableMap.of("id", getUrl(video, "id"), "title", getUrl(video, "title"),
+                                        "time", getTime(getUrl(video, "id"), bookmarkList), "boxart",
+                                        boxArts.stream().filter(box -> isValidateVideosList(video, "id", getUrl(box, "videoId")))
+                                                .min(getMapComparator())
+                                                .map(boxArt -> getUrl(boxArt, "url")).orElse("")))
                                 .collect(Collectors.toList())))
                 .collect(Collectors.toList());
     }
 
-    private static Object getTime(Object videoId, List<Map> bookmarkList) {
-
-        return bookmarkList.stream()
-                .filter(bookmark -> bookmark.get("videoId").equals(videoId))
-                .map(bookmark -> bookmark.get("time")).findFirst().orElse(null);
-
+    private static boolean isValidateVideosList(Map video, String id, Object box) {
+        return validateVideosList(video, id, box);
     }
 
-    private static Comparator<Map> boxArtSize() {
+    private static Comparator<Map> getMapComparator() {
+        return Comparator.comparingInt(Kata11::getBoxArea);
+    }
 
-        return Comparator.comparingInt(box -> (Integer) box.get("width") * (Integer) box.get("height"));
+    private static int getBoxArea(Map o2) {
+        return (Integer) getUrl(o2, "width") * (Integer) getUrl(o2, "height");
+    }
+
+    private static Object getUrl(Map boxArt, String url) {
+        return boxArt.get(url);
+    }
+
+    private static boolean validateVideosList(Map video, String listId, Object list) {
+        return getUrl(video, listId).equals(list);
+    }
+
+    private static Object getTime(Object videoId, List<Map> bookmarkList) {
+        return bookmarkList.stream().filter(bookmark -> isValidateVideosList(bookmark, "videoId", videoId))
+                .map(bookmark -> getUrl(bookmark, "time")).findFirst().orElse(null);
     }
 }
