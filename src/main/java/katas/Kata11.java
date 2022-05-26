@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import util.DataUtil;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /*
     Goal: Create a datastructure from the given data:
@@ -63,8 +65,34 @@ public class Kata11 {
         List<Map> boxArts = DataUtil.getBoxArts();
         List<Map> bookmarkList = DataUtil.getBookmarkList();
 
-        return ImmutableList.of(ImmutableMap.of("name", "someName", "videos", ImmutableList.of(
-                ImmutableMap.of("id", 5, "title", "The Chamber", "time", 123, "boxart", "someUrl")
-        )));
+        return lists.stream().map(list -> Map.of("name",
+                        list.get("name"), "videos",
+                        videos.stream().filter(
+                                        video -> video.get("listId").equals(list.get("id")))
+                                .map(video -> ImmutableMap.of("id", video.get("id"),
+                                        "title", video.get("title"), "time",
+                                        getTime(video.get("id"), bookmarkList),
+                                        "boxart",
+                                        boxArts.stream()
+                                                .filter(box -> video.get("id")
+                                                        .equals(box.get("videoId")))
+                                                .min(boxArtSize())
+                                                .map(boxArt -> boxArt.get("url"))
+                                                .orElse("")))
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+    }
+
+    private static Object getTime(Object videoId, List<Map> bookmarkList) {
+
+        return bookmarkList.stream()
+                .filter(bookmark -> bookmark.get("videoId").equals(videoId))
+                .map(bookmark -> bookmark.get("time")).findFirst().orElse(null);
+
+    }
+
+    private static Comparator<Map> boxArtSize() {
+
+        return Comparator.comparingInt(box -> (Integer) box.get("width") * (Integer) box.get("height"));
     }
 }
