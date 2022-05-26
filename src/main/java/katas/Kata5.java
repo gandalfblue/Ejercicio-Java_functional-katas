@@ -19,6 +19,12 @@ public class Kata5 {
     public static Double execute() {
         List<Movie> movies = DataUtil.getMovies();
 
-        return 3.0;
+        return movies.stream().reduce((nota1, nota2) -> {
+
+            if(nota1.getRating() >= nota2.getRating() ){
+                return nota1;
+            }
+            return nota2;
+        }).get().getRating();
     }
 }
